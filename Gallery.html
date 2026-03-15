@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AI Image Gallery</title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            background-color: #171515;
+            overflow-x: hidden;
+        }
+
+        nav {
+            height: 15vh;
+            width: 100vw;
+            background-color: #c21010;
+            padding: 5px;
+            text-align: center;
+        }
+
+        nav h1 {
+            color: white;
+            font-size: 2em;
+            
+        }
+
+        #gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+            padding: 20px;
+        }
+
+        .gallery-item {
+            cursor: pointer;
+            border-radius: 8px;
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 280px;
+            object-fit: cover;
+            display: block;
+        }
+
+        span {
+            display: block;
+            text-align: center;
+            color: white;
+            margin-top: 8px;
+            font-size: 1.3em;
+        }
+
+
+        
+    </style>
+</head>
+<body>
+    <nav>
+        <h1>Random Image Gallery</h1>
+    </nav>
+    
+    <div id="gallery"></div>
+
+    <script>
+        let data = [];
+
+    async function getRandomSelection() {
+        let response = await fetch('https://weblabs.web.app/api/anime/all.json')
+        data = await response.json();
+        renderGallery();
+    }
+
+    function renderGallery() {
+    let html = "";
+    let gallery = document.querySelector("#gallery");
+
+    for (let item of data) {
+        html += `
+            <div class="gallery-item" onclick="renderDetail(${item.uid})">
+                <img src="${item.img_url}" alt="${item.title}">
+                <span>${item.title}</span>
+            </div>
+        `;  
+    }
+
+    gallery.innerHTML = html;
+}
+
+    function renderDetail(uid) {
+        let result = null;
+        uid = parseInt(uid);
+        let detail = document.querySelector("#detail"); 
+
+        for(item of data) {
+            if(item.uid === uid) {
+                result = item;
+            }
+        }
+
+        detail.innerHTML = `
+            <div>
+                <h1>${result.title}</h1>
+                <img src="${result.img_url}" alt="${result.title}">
+                <p>${result.synopsis}</p>
+            </div>
+        `;
+
+    }
+
+    getRandomSelection();
+
+    </script>
+</body>
+</html>

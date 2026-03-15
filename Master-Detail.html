@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab Exam</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            background-color: #171515;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+
+        html {
+            height: 100vh;
+            width: 100vw;
+        }
+
+        nav {
+            height: 15vh;
+            width: 100vw;
+            background-color: #c21010;
+            padding: 5px;
+            text-align: center;
+        }
+
+        nav h1 {
+            color: white;
+            font-size: 2em;
+            
+        }
+
+        main {
+            display: flex;
+            flex-direction: row;
+            height: 85vh;
+            width: 100vw;
+            
+        }
+
+        aside{
+            background-color: gainsboro;
+            flex-grow: 3;
+            max-width: 30vw;
+            overflow-y: scroll;
+        }
+
+        article {
+            flex-grow: 8;
+            color: #d1cfcf;
+            padding: 15px;
+        }
+
+        div {
+            background-color: gainsboro;
+            border-radius: 15px;
+            padding: 5px;
+            color: black;
+            flex-direction: column;
+            height: 82vh;
+            max-width: 70vw;
+            overflow-y: scroll;
+        }
+
+        img{
+            height:auto;
+        }
+
+
+    </style>
+</head>
+
+
+<body>
+    <nav>
+        <h1>Place-Holder Title</h1>
+    </nav>
+
+    <main>
+        <aside>
+            <ul id="list">
+            </ul>
+                
+            
+
+
+        </aside>
+        <article id="detail">
+
+
+        </article>
+
+    </main>
+
+</body>
+
+<script>
+    let data = [];
+
+    async function getRandomSelection() {
+        let response = await fetch('https://weblabs.web.app/api/anime/all.json')
+        data = await response.json();
+        renderList();
+    }
+
+    function renderList() {
+        let html = "";
+        let list = document.querySelector("#list");
+
+        for(let item of data) {
+            html += `<li><a href="javascript: renderDetail(${item.uid})">${item.title}</a></li>`;
+        }
+
+        list.innerHTML = html; 
+
+    }
+
+    function renderDetail(uid) {
+        let result = null;
+        uid = parseInt(uid);
+        let detail = document.querySelector("#detail"); 
+
+        for(item of data) {
+            if(item.uid === uid) {
+                result = item;
+            }
+        }
+
+        detail.innerHTML = `
+            <div>
+                <h1>${result.title}</h1>
+                <img src="${result.img_url}">
+                <p>${result.synopsis}</p>
+            </div>
+        `;
+
+    }
+
+    getRandomSelection();
+
+</script>
+</html>
