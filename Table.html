@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Table</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: sans-serif; margin: 0; }
+
+    nav {
+      background-color: blueviolet;
+      padding: 10px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    nav h1 { color: white; margin: 0; flex: 1; }
+    nav a  { color: white; text-decoration: none;
+             border: 2px solid white; padding: 5px 14px; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px 12px;
+      text-align: left;
+    }
+    thead th {
+      background: #f0f0f0;
+      cursor: pointer;
+      user-select: none;
+    }
+    thead th.sort-asc::after  { content: ' ▲'; }
+    thead th.sort-desc::after { content: ' ▼'; }
+
+    .pagination {
+      display: flex;
+      gap: 8px;
+      padding: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .pagination button, .page-btn {
+      padding: 5px 10px;
+      cursor: pointer;
+      border: 1px solid #ccc;
+      background: white;
+    }
+    .page-btn.active {
+      background: blueviolet;
+      color: white;
+      border-color: blueviolet;
+    }
+    button:disabled { opacity: 0.5; }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="index.html">Home</a>
+    <h1>Table</h1>
+  </nav>
+
+  <table id="data-table">
+    <thead>
+      <tr>
+        <th data-col="id"      onclick="sortBy('id')">ID</th>
+        <th data-col="name"    onclick="sortBy('name')">Name</th>
+        <th>Type</th>
+        <th data-col="hp"      onclick="sortBy('hp')">HP</th>
+        <th data-col="attack"  onclick="sortBy('attack')">Attack</th>
+        <th data-col="defense" onclick="sortBy('defense')">Defense</th>
+        <th data-col="speed"   onclick="sortBy('speed')">Speed</th>
+      </tr>
+    </thead>
+    <tbody id="table-body"></tbody>
+  </table>
+
+  <div class="pagination">
+    <button id="prev-btn" onclick="goToPage(currentPage - 1)">Previous</button>
+    <div id="page-numbers"></div>
+    <button id="next-btn" onclick="goToPage(currentPage + 1)">Next</button>
+  </div>
+
+  <script>
+    let allPokemon    = [];
+    let currentPage   = 1;
+    let itemsPerPage  = 10;
+    let sortColumn    = 'id';
+    let sortDirection = 'asc';
+
+    function renderTable() {
+      // 1) Create a sorted copy (do not mutate source array).
+      let sorted = [...allPokemon].sort((a, b) => {
+        let valA = a[sortColumn];
+        let valB = b[sortColumn];
+        if (typeof valA === 'string') valA = valA.toLowerCase();
+        if (typeof valB === 'string') valB = valB.toLowerCase();
+        if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
+        if (valA > valB) return sortDirection === 'asc' ?  1 : -1;
+        return 0;
+      });
+
+      // 2) Slice only rows for the current page.
+      const start    = (currentPage - 1) * itemsPerPage;
+      const pageData = sorted.slice(start, start + itemsPerPage);
+
+      // 3) Convert page rows to HTML.
+      let html = '';
+      for (let p of pageData) {
+        html += `<tr>
+          <td>${p.id}</td>
+          <td>${p.name}</td>
+          <td>${p.type1}${p.type2 ? ' / ' + p.type2 : ''}</td>
+          <td>${p.hp}</td>
+          <td>${p.attack}</td>
+          <td>${p.defense}</td>
+          <td>${p.speed}</td>
+        </tr>`;
+      }
+      document.querySelector('#table-body').innerHTML = html;
+
+      // 4) Refresh helper UI.
+      updateSortIndicators();
+      updatePagination();
+    }
+
+    function sortBy(column) {
+      // Toggle direction when clicking same column.
+      if (sortColumn === column) {
+        sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+      } else {
+        // New column starts in ascending order.
+        sortColumn    = column;
+        sortDirection = 'asc';
+      }
+      // Jump back to first page after sorting.
+      currentPage = 1;
+      renderTable();
+    }
+
+    function updateSortIndicators() {
+      // Keep only the active arrow on the active column.
+      document.querySelectorAll('thead th').forEach(th => {
+        th.classList.remove('sort-asc', 'sort-desc');
+        if (th.dataset.col === sortColumn) {
+          th.classList.add(sortDirection === 'asc' ? 'sort-asc' : 'sort-desc');
+        }
+      });
+    }
+
+    function updatePagination() {
+      const totalPages = Math.ceil(allPokemon.length / itemsPerPage);
+      const prevBtn    = document.querySelector('#prev-btn');
+      const nextBtn    = document.querySelector('#next-btn');
+      prevBtn.disabled = currentPage === 1;
+      nextBtn.disabled = currentPage === totalPages;
+
+      let html = ''; // numbered page buttons
+      for (let i = 1; i <= totalPages; i++) {
+        html += `<button class="page-btn ${i === currentPage ? 'active' : ''}"
+                         onclick="goToPage(${i})">${i}</button>`;
+      }
+      document.querySelector('#page-numbers').innerHTML = html;
+    }
+
+    function goToPage(page) {
+      const totalPages = Math.ceil(allPokemon.length / itemsPerPage);
+      // Ignore invalid page requests.
+      if (page < 1 || page > totalPages) return;
+      currentPage = page;
+      renderTable();
+    }
+
+    async function loadPokemon() {
+      // Fetch dataset once, then render progressively.
+      for (let i = 1; i <= 50; i++) {
+        const res  = await fetch(`https://pokedextr.uwista.dev/pokemon/${i}`);
+        const data = await res.json();
+        allPokemon.push(data);
+        if (i % 10 === 0) renderTable();
+      }
+      renderTable();
+    }
+
+    loadPokemon();
+  </script>
+
+</body>
+</html>
